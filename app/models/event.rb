@@ -8,37 +8,46 @@ class Event < ActiveRecord::Base
  
 
   def self.availabilities(date)
-
     # week_availabilities = [] array of hashes, containing date + 6 following days
-
     week_availabilities = []
     available_slots = []
 
     7.times do
-      week_availabilities.push({ date: "#{date.strftime("%Y\/%m\/%d")}", slots: available_slots(date) })
+      week_availabilities << { date: date, slots: available_slots(date) }
       date += 1
     end
-      p week_availabilities.inspect
+    week_availabilities
   end
 
-    def self.available_slots(date)
+  def self.available_slots(date)
+    next_day = date + 1
+    openings = []
+    openings = Event.where('starts_at >= ? AND ends_at < ?',
+                           date, next_day).where(kind: 'opening')
+    appointments = []
+    appointments = Event.where('starts_at >= ? AND ends_at < ?',
+                               date, next_day).where(kind: 'appointment')
 
-      # retrieve the opening and appointments of the day
+    opening_slots = []
 
-      next_day = date + 1
-     
-      openings = Event.where("starts_at >= ? AND ends_at < ?", date, next_day ).where(kind: "opening")
-      appointments = Event.where("starts_at >= ? AND ends_at < ?", date, next_day ).where(kind: "appointment")
-
-      openings
-
+    unless openings.empty?
+      time_slot = openings[0][:starts_at]
+      while time_slot < openings[0][:ends_at]
+        opening_slots << time_slot.strftime('%R')
+        time_slot += 30.minutes
+      end
     end
-    
-   
 
-    #date.strftime("%Y%m%d"))
+    close_slots = []
 
-    
-    # each slots are split by 30 min
+    unless appointments.empty?
+      time_slot = appointments[0][:starts_at] # - 30.minutes
+      while time_slot < appointments[0][:ends_at]
+        close_slots << time_slot.strftime('%R')
+        time_slot += 30.minutes
+      end
+    end
 
+    free_slots = opening_slots - close_slots
+  end
 end
