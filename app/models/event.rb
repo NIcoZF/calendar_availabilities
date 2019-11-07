@@ -2,6 +2,8 @@ class Event < ActiveRecord::Base
 
   validates :starts_at, :ends_at, presence: true,
                                 format: { with: /\d{4}-\d{2}-\d{2}\s\d{1,2}:\d{1,2}:\d{1,2}/ }
+  # check for kind attribute
+  # check for starts-at before ends_at
 
  
 
@@ -10,27 +12,23 @@ class Event < ActiveRecord::Base
     # week_availabilities = [] array of hashes, containing date + 6 following days
 
     week_availabilities = []
+    available_slots = []
 
-    (1..7).each do 
-      week_availabilities.push({ date: "#{date.strftime("%Y\/%m\/%d")}", slots: available_slots })
+    7.times do
+      week_availabilities.push({ date: "#{date.strftime("%Y\/%m\/%d")}", slots: available_slots(date) })
       date += 1
     end
+      p week_availabilities.inspect
   end
 
-    def available_slots(date)
-      ## Scoping
-      # add scope to get a day in a week
-      next_day = date + 1
-      scope :daily, -> (date, next_day) { 
-        where("starts_at >= ? AND ends_at < ?", date, next_day )
-      }
-      scope :opening, -> { where(kind: "opening") }
-      # add scope daily appointment 
-      
-      # retrieve openings and appointments for each date 
+    def self.available_slots(date)
 
-      openings = Event.daily.opening # Event.where("starts_at >= ? AND ends_at < ? AND kind = ?", date, date+1, 'opening')
-      appointments = Event.where("starts_at >= ? AND kind = ?", date, 'appointment')
+      # retrieve the opening and appointments of the day
+
+      next_day = date + 1
+     
+      openings = Event.where("starts_at >= ? AND ends_at < ?", date, next_day ).where(kind: "opening")
+      appointments = Event.where("starts_at >= ? AND ends_at < ?", date, next_day ).where(kind: "appointment")
 
       openings
 
