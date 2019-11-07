@@ -16,3 +16,5 @@ class EventTest < ActiveSupport::TestCase
   end
 
 end
+
+
