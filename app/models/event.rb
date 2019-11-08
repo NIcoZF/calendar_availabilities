@@ -3,8 +3,8 @@
 class Event < ActiveRecord::Base
   validates :starts_at, :ends_at, presence: true,
                                   format: { with: /\d{4}-\d{2}-\d{2}\s\d{1,2}:\d{1,2}:\d{1,2}/ }
-  # check for kind attribute
-  # check for starts-at before ends_at
+  # validate :future_event
+  validates :kind, inclusion: { in: %w(opening appointment) }
 
   def self.availabilities(date)
     # week_availabilities = [] array of hashes, containing date + 6 following days
@@ -21,13 +21,13 @@ class Event < ActiveRecord::Base
       close = close_slots(event[:date])
       event[:slots] = opening - close
     end
-
     week_availabilities
   end
 
   def self.available_slots(date)
-    openings = Event.where('starts_at >= ? AND ends_at < ? OR weekly_recurring =?',
-                           date, date + 1, true).where(kind: 'opening')
+    # retrieve daily opening with the input date or weekly_recurring slot
+    openings = Event.where(kind: 'opening').where('starts_at >= ? AND ends_at < ? OR weekly_recurring =?',
+                                                  date, date + 1, true)
 
     opening_slots = []
 
@@ -42,8 +42,9 @@ class Event < ActiveRecord::Base
   end
 
   def self.close_slots(date)
-    appointments = Event.where('starts_at >= ? AND ends_at < ?',
-                               date, date + 1).where(kind: 'appointment')
+    # retrieve daily appointment with input date slot
+    appointments = Event.where(kind: 'appointment').where('starts_at >= ? AND ends_at < ?',
+                                                          date, date + 1)
     close_slots = []
 
     unless appointments.empty?
@@ -54,5 +55,11 @@ class Event < ActiveRecord::Base
       end
     end
     close_slots
+  end
+
+  private
+
+  def future_event
+    errors.add(:starts_at, "Can't be in the past!") if starts_at < Time.now
   end
 end

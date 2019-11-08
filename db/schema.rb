@@ -16,9 +16,9 @@ ActiveRecord::Schema.define(version: 20_171_206_192_533) do
   create_table "events", force: :cascade do |t|
     t.datetime "starts_at"
     t.datetime "ends_at"
-    t.string   "kind"
-    t.boolean  "weekly_recurring"
-    t.datetime "created_at",       null: false
-    t.datetime "updated_at",       null: false
+    t.string "kind"
+    t.boolean "weekly_recurring"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 end
